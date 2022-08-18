@@ -48,6 +48,14 @@ app.post('/api/shorturl', (req, res) => {
   let suffix = shortid.generate()
   let newShortUrl = suffix
 
+  client_url = (client_url.startsWith("http://www.") || client_url.startsWith("https://www.") && client_url.endsWith(".com"))  
+  
+  if(!client_url) {
+    res.json({
+      "error": "invalid url"
+    })
+  }
+
   const newURL = new ShortURL({
     original_url: client_url,
     short_url: __dirname + "/api/shorturl/" + suffix,
@@ -55,7 +63,7 @@ app.post('/api/shorturl', (req, res) => {
   });
 
   newURL.save((err, doc) => {
-    if(err) return console.log(err)
+    if(err) console.log(err)
     res.json({
       "original_url": newURL.original_url,
       "short_url": newURL.short_url,
