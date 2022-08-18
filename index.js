@@ -43,24 +43,24 @@ const ShortURL = mongoose.model( 'ShortURL', new mongoose.Schema({
 }));
 
 
-app.post('/api/shorturl', (req, res) => { 
-  let client_url = req.body.url;
-  let suffix = shortid.generate()
-  let newShortUrl = suffix
 
+app.post('/api/shorturl', (req, res) => { 
   const formatURL = (url) => {
     let urlformat = url.startsWith("http://www.") || url.startsWith("https://www.")
     if(urlformat == true) {
-      return url;
-    } else {
-      res.json({
-        "error": "invalid url"
-      })
-    }
+      return url; 
+  } else {
+    res.json({
+      "error": "Invalid Url"
+    });
   }
+};
+
+  let client_url = formatURL(req.body.url);
+  let suffix = shortid.generate()
 
   const newURL = new ShortURL({
-    original_url: formatURL(client_url),
+    original_url: client_url,
     short_url: __dirname + "/api/shorturl/" + suffix,
     suffix: suffix
   });
