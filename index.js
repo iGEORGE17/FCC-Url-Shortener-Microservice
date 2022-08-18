@@ -7,10 +7,10 @@ const bodyParser = require('body-parser');
 const shortid = require('shortid');
 
 
-
+//  initialize app 
 const app = express();
 
-
+// connect to mongodb
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -21,8 +21,7 @@ mongoose.connect(process.env.MONGO_URI, {
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-
-app.use(bodyParser.urlencoded({"extended": false}))
+app.use(bodyParser.urlencoded({"extended": false}));
 app.use(bodyParser.json());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
@@ -36,6 +35,7 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
+// shortURL model
 const ShortURL = mongoose.model( 'ShortURL', new mongoose.Schema({
   short_url: String,
   original_url: String,
@@ -43,36 +43,31 @@ const ShortURL = mongoose.model( 'ShortURL', new mongoose.Schema({
 }));
 
 
-
 app.post('/api/shorturl', (req, res) => { 
-  const formatURL = (url) => {
-    let urlformat = url.startsWith("http://www.") || url.startsWith("https://www.")
-    if(urlformat == true) {
-      return url; 
-  } else {
-    res.json({
-      "error": "Invalid Url"
-    });
-  }
-};
-
   let client_url = req.body.url;
   let suffix = shortid.generate();
+  let urlFormat = client_url.startsWith("http://www.") || client_url.startsWith("https://www.")
 
-  const newURL = new ShortURL({
-    original_url: formatURL(client_url),
-    short_url: __dirname + "/api/shorturl/" + suffix,
-    suffix: suffix
-  });
-
-  newURL.save((err, doc) => {
-    if(err) console.log(err)
+  if(urlFormat == true) {
+    const newURL = new ShortURL({
+      original_url: client_url,
+      suffix: suffix,
+      short_url: __dirname + "/api/shorturl/" + suffix
+    });
+  
+    newURL.save((err, doc) => {
+      if(err) console.log(err)
+      res.json({
+        "original_url": newURL.original_url,
+        "short_url": newURL.short_url,
+        "suffix": newURL.suffix
+      });    
+    });
+  } else {
     res.json({
-      "original_url": newURL.original_url,
-      "short_url": newURL.short_url,
-      "suffix": newURL.suffix
-    });    
-  });
+      error: "Invalid Url"
+    });
+  }   
 });
 
 app.get('/api/shorturl/:suffix', async (req, res) => {
