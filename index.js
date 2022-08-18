@@ -56,11 +56,11 @@ app.post('/api/shorturl', (req, res) => {
   }
 };
 
-  let client_url = formatURL(req.body.url);
-  let suffix = shortid.generate()
+  let client_url = req.body.url;
+  let suffix = shortid.generate();
 
   const newURL = new ShortURL({
-    original_url: client_url,
+    original_url: formatURL(client_url),
     short_url: __dirname + "/api/shorturl/" + suffix,
     suffix: suffix
   });
