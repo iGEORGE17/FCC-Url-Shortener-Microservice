@@ -48,7 +48,7 @@ app.post('/api/shorturl', (req, res) => {
   let suffix = shortid.generate()
   let newShortUrl = suffix
 
-  client_url = (client_url.startsWith("http://www.") || client_url.startsWith("https://www.") && client_url.endsWith(".com"))  
+  client_url = (client_url.startsWith("http://www.") || client_url.startsWith("https://www."))  
   
   if(!client_url) {
     res.json({
