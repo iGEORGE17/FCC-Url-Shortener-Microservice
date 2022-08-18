@@ -11,10 +11,10 @@ const shortid = require('shortid');
 const app = express();
 
 
-// mongoose.connect(process.env.MONGODB_URI, {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true
-// });
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
 
 // Basic Configuration
@@ -36,16 +36,42 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
+const ShortURL = mongoose.model( 'ShortURL', new mongoose.Schema({
+  short_url: String,
+  original_url: String,
+  suffix: String
+}));
 
 
 app.post('/api/shorturl', (req, res) => { 
-  let prefix = "https://www." || "http://www.";
   let client_url = req.body.url;
-  let short_url = shortid.generate();
-  res.json({
-    "original_url": `${client_url}`,
-    "short_url": __dirname + "/api/shorturl/" + short_url
-  })
+  let suffix = shortid.generate()
+  let newShortUrl = suffix
+
+  const newURL = new ShortURL({
+    original_url: client_url,
+    short_url: __dirname + "/api/shorturl/" + suffix,
+    suffix: suffix
+  });
+
+  newURL.save((err, doc) => {
+    if(err) return console.log(err)
+    res.json({
+      "original_url": newURL.original_url,
+      "short_url": newURL.short_url,
+      "suffix": newURL.suffix
+    });    
+  });
+});
+
+app.get('/api/shorturl/:suffix', async (req, res) => {
+    let userGeneratedSuffix = req.params.suffix
+  await ShortURL.find({suffix: userGeneratedSuffix})
+                .then((foundURLs) => {
+                  let urlRedirect =  foundURLs[0];
+                  console.log(urlRedirect);
+                  res.redirect(urlRedirect.original_url)
+                });
 });
 
 app.listen(port, function() {
