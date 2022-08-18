@@ -48,16 +48,19 @@ app.post('/api/shorturl', (req, res) => {
   let suffix = shortid.generate()
   let newShortUrl = suffix
 
-  client_url = (client_url.startsWith("http://www.") || client_url.startsWith("https://www."))  
-  
-  if(!client_url) {
-    res.json({
-      "error": "invalid url"
-    })
+  const formatURL = (url) => {
+    let urlformat = url.startsWith("http://www.") || url.startsWith("https://www.")
+    if(urlformat == true) {
+      return url;
+    } else {
+      res.json({
+        "error": "invalid url"
+      })
+    }
   }
 
   const newURL = new ShortURL({
-    original_url: client_url,
+    original_url: formatURL(client_url),
     short_url: __dirname + "/api/shorturl/" + suffix,
     suffix: suffix
   });
