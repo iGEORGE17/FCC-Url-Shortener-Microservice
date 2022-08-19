@@ -57,7 +57,7 @@ app.post('/api/shorturl', (req, res) => {
         if(err) console.log(err)
         res.json({
           original_url: data.original_url,
-          short_url: data.id
+          short_url: data._id
         });    
       });
     }
