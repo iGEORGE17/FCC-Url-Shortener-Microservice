@@ -5,8 +5,8 @@ const mongoose = require('mongoose')
 const mongodb = require('mongodb');
 const bodyParser = require('body-parser');
 const shortid = require('shortid');
-const dns = require('dns')
-
+const dns = require('dns');
+const urlparser = require('url')
 
 //  initialize app 
 const app = express();
@@ -36,47 +36,48 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-const links = [];
-let id = 0;
+// shortURL model
+const ShortURL = mongoose.model( 'ShortURL', new mongoose.Schema({
+  short_url: String,
+  original_url: String,
+  suffix: String
+}));
 
-app.post('/api/shorturl', (req, res) => {
-  const {url} = req.body;
 
-  const noHTTPSurl = url.replace(/^https?:\/\//, '')
+app.post('/api/shorturl', (req, res) => { 
+  let client_url = req.body.url;
 
-  // check if url is valid
-  dns.lookup(noHTTPSurl, (err, addresses, family) => {
-    if(err) {
-      return res.json({
+  dns.lookup(urlparser.parse(client_url).hostname, (error, address) => {
+    if(!address) {
+      res.json({
         error: 'invalid url'
       })
     } else {
-      id++;
-
-      const link = {
-        original_url: url,
-        short_url: `${id}`
-      }
-
-      links.push(link);
-
-      return res.json(links)
+      const newURL = new ShortURL({ original_url: client_url });
+    
+      newURL.save((err, data) => {
+        if(err) console.log(err)
+        res.json({
+          original_url: data.original_url,
+          short_url: data.id
+        });    
+      });
     }
   })
-})
 
-app.get('/api/shorturl/:short_url', (req, res) => {
-  const {short_url} = req.params;
-  const link = links.find(l => l.short_url === short_url);
+  
+});
 
-  if(link) {
-    return res.redirect(link.original_url)
-  } else {
-    return res.json({
-      error: 'No short url'
+app.get('/api/shorturl/:id', async (req, res) => {
+    let id = req.params.id
+    await ShortURL.findById(id, (err, data) => {
+        if(!data) {
+          res.json({ error: 'invalid url'})
+        } else {
+          res.redirect(data.original_url)
+        }
     })
-  }
-})
+});
 
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
