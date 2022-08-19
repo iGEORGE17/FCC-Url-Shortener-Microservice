@@ -66,8 +66,8 @@ app.post('/api/shorturl', (req, res) => {
   
 });
 
-app.get('/api/shorturl/:id', async (req, res) => {
-    let id = req.params.id
+app.get('/api/shorturl/:short_url', async (req, res) => {
+    let id = req.params.short_url
     await ShortURL.findById(id, (err, data) => {
         if(!data) {
           res.json({ error: 'invalid url'})
