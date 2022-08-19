@@ -65,9 +65,9 @@ app.post('/api/shorturl', (req, res) => {
   })
 })
 
-app.get('/api/shorturl/:id', (req, res) => {
-  const {id} = req.params;
-  const link = links.find(l => l.short_url === id);
+app.get('/api/shorturl/:short_url', (req, res) => {
+  const {short_url} = req.params;
+  const link = links.find(l => l.short_url === short_url);
 
   if(link) {
     return res.redirect(link.original_url)
