@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const mongodb = require('mongodb');
 const bodyParser = require('body-parser');
 const shortid = require('shortid');
+const dns = require('dns')
 
 
 //  initialize app 
@@ -35,50 +36,47 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-// shortURL model
-const ShortURL = mongoose.model( 'ShortURL', new mongoose.Schema({
-  short_url: String,
-  original_url: String,
-  suffix: String
-}));
+const links = [];
+let id = 0;
 
+app.post('/api/shorturl', (req, res) => {
+  const {url} = req.body;
 
-app.post('/api/shorturl', (req, res) => { 
-  let client_url = req.body.url;
-  let suffix = shortid.generate();
-  let urlFormat = client_url.startsWith("http://www.") || client_url.startsWith("https://www.")
+  const noHTTPSurl = url.replace(/^https?:\/\//, '')
 
-  if(urlFormat == true) {
-    const newURL = new ShortURL({
-      original_url: client_url,
-      suffix: suffix,
-      short_url: __dirname + "/api/shorturl/" + suffix
-    });
-  
-    newURL.save((err, doc) => {
-      if(err) console.log(err)
-      res.json({
-        "original_url": newURL.original_url,
-        "short_url": newURL.short_url,
-        "suffix": newURL.suffix
-      });    
-    });
+  // check if url is valid
+  dns.lookup(noHTTPSurl, (err, addresses, family) => {
+    if(err) {
+      return res.json({
+        error: 'invalid url'
+      })
+    } else {
+      id++;
+
+      const link = {
+        original_url: url,
+        short_url: `${id}`
+      }
+
+      links.push(link);
+
+      return res.json(link)
+    }
+  })
+})
+
+app.get('/api/shorturl/:id', (req, res) => {
+  const {id} = req.params;
+  const link = links.find(l => l.short_url === id);
+
+  if(link) {
+    return res.redirect(link.original_url)
   } else {
-    res.json({
-      error: "Invalid Url"
-    });
-  }   
-});
-
-app.get('/api/shorturl/:suffix', async (req, res) => {
-    let userGeneratedSuffix = req.params.suffix
-  await ShortURL.find({suffix: userGeneratedSuffix})
-                .then((foundURLs) => {
-                  let urlRedirect =  foundURLs[0];
-                  console.log(urlRedirect);
-                  res.redirect(urlRedirect.original_url)
-                });
-});
+    return res.json({
+      error: 'No short url'
+    })
+  }
+})
 
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
