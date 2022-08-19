@@ -55,7 +55,7 @@ app.post('/api/shorturl', (req, res) => {
 
       const link = {
         original_url: url,
-        short_url: `${id}`
+        short_url: id
       }
 
       links.push(link);
