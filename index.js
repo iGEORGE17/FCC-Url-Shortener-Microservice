@@ -60,7 +60,7 @@ app.post('/api/shorturl', (req, res) => {
 
       links.push(link);
 
-      return res.json(link)
+      return res.json(links)
     }
   })
 })
